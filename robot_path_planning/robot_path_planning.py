@@ -3,14 +3,15 @@ import rclpy
 import threading
 import time
 import random
+from action_msgs.msg import GoalStatus
 from rclpy.action import ActionClient
+from rcl_interfaces.msg import Parameter, ParameterType, ParameterValue
+from rcl_interfaces.srv import SetParameters, GetParameters
 from geometry_msgs.msg import PoseStamped
 from nav2_msgs.action import FollowPath
 from nav_msgs.msg import OccupancyGrid, Path, Odometry
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSHistoryPolicy, QoSDurabilityPolicy, QoSReliabilityPolicy
-
-working = False
 
 
 class RRT:
@@ -45,7 +46,7 @@ class RRT:
                  rand_area,
                  expand_dis=0.25,
                  path_resolution=0.01,
-                 safe_distance=0.2,
+                 safe_distance=0.3,
                  goal_sample_rate=5,
                  max_iter=1000,
                  play_area=None,
@@ -226,57 +227,81 @@ class PlanPublisher(Node):
         super().__init__('rrt_plan')
         qos_profile = QoSProfile(depth=10)
         self.plan_publisher = self.create_publisher(Path, "rrt_plan", qos_profile)
-        self.timer = self.create_timer(5, self.publish_plan)
+        self.timer = self.create_timer(5, self.is_working)
 
         self.odom_instance = OdomSubscriber.instance()
         self.map_instance = MapSubscriber.instance()
-        self.goal_instance = FollowPathActionClient.instance()
 
         # rrt planner
         self.rrt = None
 
-    def publish_plan(self):
-        if not self.goal_instance.working:
-            obstacle_list = []
+        # parameter
+        self.working_parameter_client = self.create_client(
+            GetParameters,
+            '/follow_path_action_client/get_parameters'
+        )
+        self.request = GetParameters.Request()
+        self.request.names = ["working"]
 
-            for i, occupancy in enumerate(self.map_instance.occupancy_map):
-                cell_x_pixel = i % self.map_instance.map_width
-                cell_y_pixel = i // self.map_instance.map_width
-                cell_x_pose = self.map_instance.resolution * cell_x_pixel + self.map_instance.pose_x
-                cell_y_pose = self.map_instance.resolution * cell_y_pixel + self.map_instance.pose_y
-                if occupancy == -1 or occupancy == 100:
-                    obstacle_list.append((cell_x_pose, cell_y_pose))
+        self.working_parameter_client.wait_for_service()
 
-            # robot grid path not odom
-            robot_x = (self.odom_instance.odom_x - self.map_instance.pose_x) // self.map_instance.resolution
-            robot_y = (self.odom_instance.odom_y - self.map_instance.pose_y) // self.map_instance.resolution
+    def is_working(self):
+        future = self.working_parameter_client.call_async(self.request)
+        future.add_done_callback(self.callback_global_param)
 
-            goal_occupancy = -1
-            goal_index = -1
-            while goal_occupancy != 0:
-                goal_index = random.randrange(len(self.map_instance.occupancy_map) - 1)
-                goal_occupancy = self.map_instance.occupancy_map[goal_index]
-
-            goal_x = (goal_index % self.map_instance.map_width) * self.map_instance.resolution + self.map_instance.pose_x
-            goal_y = (goal_index // self.map_instance.map_width) * self.map_instance.resolution + self.map_instance.pose_y
-
-            self.rrt = RRT(
-                start=[self.odom_instance.odom_x, self.odom_instance.odom_y],
-                goal=[goal_x, goal_y],
-                rand_area=[-2.5, 2.5],
-                obstacle_list=obstacle_list,
-                map_instance=self.map_instance
-            )
-
-            start_time = time.time()
-            print(start_time)
-            rrt_path = self.rrt.planning()
-            print(time.time() - start_time)
-            if rrt_path is None:
-                print("Cannot find path")
+    def callback_global_param(self, future):
+        try:
+            result = future.result()
+            is_working = result.values[0].bool_value
+            if not is_working:
+                self.publish_plan()
             else:
-                print(rrt_path)
-                print("found path!!")
+                print("Robot is working...")
+        except Exception as e:
+            print("Exception Occur {}".format(e))
+
+    def publish_plan(self):
+        print("Plan Compute...")
+        obstacle_list = []
+        for i, occupancy in enumerate(self.map_instance.occupancy_map):
+            cell_x_pixel = i % self.map_instance.map_width
+            cell_y_pixel = i // self.map_instance.map_width
+            cell_x_pose = self.map_instance.resolution * cell_x_pixel + self.map_instance.pose_x
+            cell_y_pose = self.map_instance.resolution * cell_y_pixel + self.map_instance.pose_y
+            if occupancy == -1 or occupancy == 100:
+                obstacle_list.append((cell_x_pose, cell_y_pose))
+
+        # robot grid path not odom
+        robot_x = (self.odom_instance.odom_x - self.map_instance.pose_x) // self.map_instance.resolution
+        robot_y = (self.odom_instance.odom_y - self.map_instance.pose_y) // self.map_instance.resolution
+
+        goal_occupancy = -1
+        goal_index = -1
+        while goal_occupancy != 0:
+            goal_index = random.randrange(len(self.map_instance.occupancy_map) - 1)
+            goal_occupancy = self.map_instance.occupancy_map[goal_index]
+
+        goal_x = (goal_index % self.map_instance.map_width) * self.map_instance.resolution + self.map_instance.pose_x
+        goal_y = (goal_index // self.map_instance.map_width) * self.map_instance.resolution + self.map_instance.pose_y
+
+        self.rrt = RRT(
+            start=[self.odom_instance.odom_x, self.odom_instance.odom_y],
+            goal=[goal_x, goal_y],
+            rand_area=[-2.5, 2.5],
+            obstacle_list=obstacle_list,
+            map_instance=self.map_instance
+        )
+
+        start_time = time.time()
+        rrt_path = self.rrt.planning()
+
+        print("Plan Finish time: " + str(time.time() - start_time))
+        if rrt_path is None:
+            print("Cannot find path")
+        else:
+            for path in rrt_path:
+                print("x: {x} y: {y}".format(x=path[0], y=path[1]))
+            print("found path!!")
 
             path = Path()
             path.header.frame_id = 'map'
@@ -287,24 +312,15 @@ class PlanPublisher(Node):
                 pose.pose.position.y = now_pose[1]
                 path.poses.append(pose)
 
+            print("Plan is published!")
             self.plan_publisher.publish(path)
 
 
 class FollowPathActionClient(Node):
     __instance = None
 
-    @classmethod
-    def __getInstance(cls):
-        return cls.__instance
-
-    @classmethod
-    def instance(cls, *args, **kwargs):
-        cls.__instance = cls(*args, **kwargs)
-        cls.instance = cls.__getInstance
-        return cls.__instance
-
     def __init__(self):
-        super(FollowPathActionClient, self).__init__('goal_executor')
+        super(FollowPathActionClient, self).__init__('follow_path_action_client')
         qos_profile = QoSProfile(depth=10)
         self.rrt_plan_sub = self.create_subscription(
             Path,
@@ -313,42 +329,64 @@ class FollowPathActionClient(Node):
             qos_profile
         )
 
-        self.working = False
         self.declare_parameter('working', False)
         self.goal_handle = None
         self.result_future = None
         self.odom_instance = OdomSubscriber.instance()
-        self.follow_path_client = ActionClient(self, FollowPath, 'FollowPath')
+        self.follow_path_client = ActionClient(self, FollowPath, 'follow_path')
+        self.send_goal_future = None
 
     def follow_path(self, msg):
         if msg is not None:
-            self.working = True
+            self.set_working(True)
             while not self.follow_path_client.wait_for_server(timeout_sec=1.0):
                 print("'FollowPath' action server not available, waiting...")
 
-            goal_poses = []
-            for goal in msg.poses[::-1]:
-                goal_pose = PoseStamped()
-                goal_pose.header.frame_id = 'map'
-                goal_pose.pose.position.x = goal.pose.position.x
-                goal_pose.pose.position.y = goal.pose.position.y
-                goal_pose.pose.orientation.w = goal.pose.orientation.w
-                goal_pose.pose.orientation.z = goal.pose.orientation.z
-                goal_poses.append(goal_pose)
+            path = Path()
+            path.header.frame_id = 'map'
+
+            for route in msg.poses[::-1]:
+                route_pose = PoseStamped()
+                route_pose.header.frame_id = 'map'
+                route_pose.pose.position.x = route.pose.position.x
+                route_pose.pose.position.y = route.pose.position.y
+                path.poses.append(route_pose)
 
             goal_msg = FollowPath.Goal()
-            goal_msg.path = goal_poses
-            send_goal_future = self.follow_path_client.send_goal_async(goal_msg, self._feedback_callback)
+            goal_msg.path = path
+            goal_msg.controller_id = "FollowPath"
+            self.follow_path_client.wait_for_server()
+            self.send_goal_future = self.follow_path_client.send_goal_async(goal_msg, self._feedback_callback)
+            self.send_goal_future.add_done_callback(self._response_callback)
             print('Send Goal!')
-            rclpy.spin_until_future_complete(self, send_goal_future)
-            self.goal_handle = send_goal_future.result()
-            self.result_future = self.goal_handle.get_result_async()
-            print("Goal Success!!")
-            self.working = False
 
     def _feedback_callback(self, msg):
         self.feedback = msg.feedback
         return
+
+    def _response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            print('Action goal rejected.')
+        print('Action goal accepted.')
+        self.send_goal_future = goal_handle.get_result_async()
+        self.send_goal_future.add_done_callback(self._result_callback)
+
+    def _result_callback(self, future):
+        action_status = future.result().status
+        if action_status == GoalStatus.STATUS_SUCCEEDED:
+            print('Action Succeeded!')
+        else:
+            print('Action failed with status: {0}'.format(action_status))
+        self.set_working(False)
+
+    def set_working(self, is_working):
+        new_param = rclpy.parameter.Parameter(
+            'working',
+            rclpy.Parameter.Type.BOOL,
+            is_working
+        )
+        self.set_parameters([new_param])
 
 
 class OdomSubscriber(Node):
@@ -448,7 +486,7 @@ def main(args=None):
     rclpy.init(args=args)
     map_sub = MapSubscriber.instance()
     odom_sub = OdomSubscriber.instance()
-    follow_path_action_client = FollowPathActionClient.instance()
+    follow_path_action_client = FollowPathActionClient()
     plan_pub = PlanPublisher()
     executor = rclpy.executors.MultiThreadedExecutor()
     executor.add_node(map_sub)
