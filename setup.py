@@ -14,6 +14,7 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         (os.path.join('share', package_name, 'params'), glob('params/*.yaml')),
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*.model')),
+        (os.path.join('share', package_name, 'worlds'), glob('worlds/*.world')),
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
         (os.path.join('share', package_name, 'maps'), glob('maps/*.pgm')),
         (os.path.join('share', package_name, 'maps'), glob('maps/*.yaml')),
