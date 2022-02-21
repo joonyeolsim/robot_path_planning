@@ -18,6 +18,10 @@ setup(
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
         (os.path.join('share', package_name, 'maps'), glob('maps/*.pgm')),
         (os.path.join('share', package_name, 'maps'), glob('maps/*.yaml')),
+        (os.path.join('share', package_name, 'maps'), glob('maps/aws_warehouse/*.pgm')),
+        (os.path.join('share', package_name, 'maps'), glob('maps/aws_warehouse/*.png')),
+        (os.path.join('share', package_name, 'maps'), glob('maps/aws_warehouse/*.yaml')),
+        (os.path.join('share', package_name, 'models'), glob('models/*.sdf'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
