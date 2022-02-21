@@ -28,6 +28,9 @@ def generate_launch_description():
     # On this example all robots are launched with the same settings
     map_yaml_file = LaunchConfiguration('map')
 
+    # sdf file
+    sdf_file = LaunchConfiguration('sdf')
+
     autostart = LaunchConfiguration('autostart')
     rviz_config_file = LaunchConfiguration('rviz_config')
     use_robot_state_pub = LaunchConfiguration('use_robot_state_pub')
@@ -57,7 +60,12 @@ def generate_launch_description():
 
     declare_map_yaml_cmd = DeclareLaunchArgument(
         'map',
-        default_value=os.path.join(rpp_dir, 'maps', 'turtlebot3_world.yaml'),
+        default_value=os.path.join(rpp_dir, 'maps',  'aws_warehouse_map.yaml'),
+        description='Full path to map file to load')
+
+    declare_sdf_cmd = DeclareLaunchArgument(
+        'sdf',
+        default_value=os.path.join(rpp_dir, 'models', 'ground_truth_waffle.sdf'),
         description='Full path to map file to load')
 
     declare_autostart_cmd = DeclareLaunchArgument(
@@ -82,7 +90,7 @@ def generate_launch_description():
     # Start Gazebo with plugin providing the robot spawing service
     # start_gazebo_cmd = ExecuteProcess(
     #     cmd=[simulator, '--verbose', '-s', 'libgazebo_ros_init.so',
-    #          '-s', 'libgazebo_ros_factory.so', '-s', 'libgazebo_ros_force_system.so', world],
+    #          '-s', 'libgazebo_ros_factory.so', '-s', 'libgazebo_ros_force_system.so',  world],
     #     output='screen')
 
     # Define commands for spawing the robots into Gazebo
@@ -97,7 +105,8 @@ def generate_launch_description():
                     'y_pose': TextSubstitution(text=str(robot['y_pose'])),
                     'z_pose': TextSubstitution(text=str(robot['z_pose'])),
                     'robot_name': robot['name'],
-                    'turtlebot_type': TextSubstitution(text='waffle')
+                    'sdf': sdf_file,
+                    # 'turtlebot_type': TextSubstitution(text='waffle'),
                 }.items()))
 
     # Define commands for launching the navigation instances
@@ -163,6 +172,7 @@ def generate_launch_description():
     ld.add_action(declare_autostart_cmd)
     ld.add_action(declare_rviz_config_file_cmd)
     ld.add_action(declare_use_robot_state_pub_cmd)
+    ld.add_action(declare_sdf_cmd)
     for declare_robot_params_cmd in declare_robots_params_cmds:
         ld.add_action(declare_robot_params_cmd)
 

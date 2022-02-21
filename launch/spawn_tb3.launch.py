@@ -29,7 +29,8 @@ def generate_launch_description():
             arguments=[
                 '--robot_name', launch.substitutions.LaunchConfiguration('robot_name'),
                 '--robot_namespace', launch.substitutions.LaunchConfiguration('robot_name'),
-                '--turtlebot_type', launch.substitutions.LaunchConfiguration('turtlebot_type'),
+                # '--turtlebot_type', launch.substitutions.LaunchConfiguration('turtlebot_type'),
+                '--sdf', launch.substitutions.LaunchConfiguration('sdf'),
                 '-x', launch.substitutions.LaunchConfiguration('x_pose'),
                 '-y', launch.substitutions.LaunchConfiguration('y_pose'),
                 '-z', launch.substitutions.LaunchConfiguration('z_pose')]),
