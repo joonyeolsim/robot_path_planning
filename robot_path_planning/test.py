@@ -7,7 +7,7 @@ import time
 if __name__ == "__main__":
     start_time = time.time()
     # ouput.yaml을 불러옴
-    robot_n = 10
+    robot_n = 4
     with open("output.yaml") as states_file:
         schedule = yaml.load(states_file, Loader=yaml.FullLoader)
     schedule = schedule["schedule"]
@@ -149,7 +149,6 @@ if __name__ == "__main__":
     for i, agent_dir in enumerate(dir_list2):
         t = 0
         agent_name = "agent" + str(i)
-        agent_start_pose = schedule[agent_name][0]
         agent_schedule = [{'x': schedule[agent_name][0]['x'], 'y': schedule[agent_name][0]['y'], 't': t}]
         t += 1
         for direction in agent_dir:
@@ -166,5 +165,5 @@ if __name__ == "__main__":
             agent_schedule.append({'x': x, 'y': y, 't': t})
             t += 1
         re_schedule["schedule"][agent_name] = agent_schedule
-    with open("output_test.yaml", 'w') as output_yaml:
+    with open("output.yaml", 'w') as output_yaml:
         yaml.safe_dump(re_schedule, output_yaml)

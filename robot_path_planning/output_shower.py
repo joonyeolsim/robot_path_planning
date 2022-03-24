@@ -4,7 +4,7 @@ from time import sleep
 
 if __name__ == '__main__':
     map = []
-    with open('../maps/logistics_world/Map', 'r') as f:
+    with open('../maps/logistics_world/Map_simple', 'r') as f:
         lines = f.readlines()
         for line in lines:
             map.append(list(line[:-1]))

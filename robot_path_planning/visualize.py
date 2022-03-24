@@ -77,7 +77,7 @@ class Animation:
         self.anim = animation.FuncAnimation(self.fig, self.animate_func,
                                             init_func=self.init_func,
                                             frames=int(self.T + 1) * 10,
-                                            interval=100,
+                                            interval=5,
                                             blit=True)
 
     def save(self, file_name, speed):
@@ -121,6 +121,7 @@ class Animation:
                     d1.set_facecolor('red')
                     d2.set_facecolor('red')
                     print("COLLISION! (agent-agent) ({}, {})".format(i, j))
+                    exit(0)
 
         return self.patches + self.artists
 
@@ -153,7 +154,7 @@ if __name__ == "__main__":
     with open('input.yaml', 'r') as map_file:
         map = yaml.load(map_file, Loader=yaml.FullLoader)
 
-    with open('output_test.yaml', 'r') as states_file:
+    with open('output.yaml', 'r') as states_file:
         schedule = yaml.load(states_file, Loader=yaml.FullLoader)
 
     animation = Animation(map, schedule)

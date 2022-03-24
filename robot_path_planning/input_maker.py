@@ -2,9 +2,10 @@ import yaml
 import random
 
 if __name__ == '__main__':
+    agent_num = 4
     obstacle_list = []
     grid_map = []
-    with open('../maps/logistics_world/Map_backup', 'r') as f:
+    with open('../maps/logistics_world/Map_simple', 'r') as f:
         lines = f.readlines()
         for line in lines:
             grid_map.append(list(map(int, line.rstrip())))
@@ -18,7 +19,7 @@ if __name__ == '__main__':
                 obstacle_list.append((j, i))
 
     agent_list = []
-    for agent in range(10):
+    for agent in range(agent_num):
         while True:
             rand_x = random.randint(0, map_x - 1)
             rand_y = random.randint(0, map_y - 1)
