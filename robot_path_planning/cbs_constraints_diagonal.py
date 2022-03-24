@@ -380,7 +380,7 @@ def main():
         print("Solution not found")
         return
     end_time = time.time()
-    print("수행 시간: " + str(end_time - start_time))
+    print("수행 시간: " + str(round(end_time - start_time, 3)))
 
     # Write to output file
     with open("output.yaml", 'r') as output_yaml:
