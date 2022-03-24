@@ -391,6 +391,7 @@ def main():
 
     output["schedule"] = solution
     output["cost"] = env.compute_solution_cost(solution)
+    print("비용: " + str(output["cost"]))
     with open("output.yaml", 'w') as output_yaml:
         yaml.safe_dump(output, output_yaml)
 
