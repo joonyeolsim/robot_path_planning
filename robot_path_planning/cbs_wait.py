@@ -404,7 +404,10 @@ class Environment(object):
             agent_name = "agent" + str(i)
             agent_schedule = [{'x': schedule[agent_name][0]['x'], 'y': schedule[agent_name][0]['y'], 't': t}]
             t += 1
-            for direction in agent_dir:
+            i = -1
+            while agent_dir[i] == 5:
+                i -= 1
+            for direction in agent_dir[:i + 1]:
                 x = agent_schedule[t - 1]['x']
                 y = agent_schedule[t - 1]['y']
                 if direction == 2:

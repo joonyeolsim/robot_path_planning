@@ -193,23 +193,6 @@ class Environment(object):
                         result.location_1 = state_2b.location
                         result.agent_1 = agent_2
                         return result
-                # if state_1b.is_equal_except_time(state_2a):
-                #     if (abs(state_2b.location.y - state_2a.location.y) == 1 and abs(state_1b.location.x - state_1a.location.x) == 1) or \
-                #             (abs(state_2b.location.x - state_2a.location.x) == 1 and abs(state_1b.location.y - state_1a.location.y) == 1):
-                #         result.time = t + 1
-                #         result.type = Conflict.VERTEX_FIRST
-                #         result.location_1 = state_1b.location
-                #         result.agent_1 = agent_1
-                #         return result
-                #
-                # if state_2b.is_equal_except_time(state_1a):
-                #     if (abs(state_1b.location.y - state_1a.location.y) == 1 and abs(state_2b.location.x - state_2a.location.x) == 1) or \
-                #             (abs(state_1b.location.x - state_1a.location.x) == 1 and abs(state_2b.location.y - state_2a.location.y) == 1):
-                #         result.time = t + 1
-                #         result.type = Conflict.VERTEX_FIRST
-                #         result.location_1 = state_2b.location
-                #         result.agent_1 = agent_2
-                #         return result
 
         return False
 
@@ -390,7 +373,7 @@ def main():
         print("Solution not found")
         return
     end_time = time.time()
-    print("수행 시간: " + str(end_time - start_time))
+    print("수행 시간: " + str(round(end_time - start_time, 3)))
 
     # Write to output file
     with open("output.yaml", 'r') as output_yaml:
