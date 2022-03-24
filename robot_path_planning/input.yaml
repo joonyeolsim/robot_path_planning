@@ -1,16 +1,22 @@
 agents:
-- goal: [3, 5]
+- goal: [9, 8]
   name: agent0
-  start: [9, 8]
-- goal: [10, 5]
+  start: [9, 10]
+- goal: [1, 4]
   name: agent1
-  start: [1, 5]
-- goal: [1, 2]
+  start: [11, 10]
+- goal: [7, 2]
   name: agent2
-  start: [9, 7]
-- goal: [3, 8]
+  start: [5, 10]
+- goal: [10, 1]
   name: agent3
-  start: [11, 1]
+  start: [6, 3]
+- goal: [5, 2]
+  name: agent4
+  start: [10, 9]
+- goal: [6, 5]
+  name: agent5
+  start: [5, 3]
 map:
   dimensions: [13, 13]
   obstacles:

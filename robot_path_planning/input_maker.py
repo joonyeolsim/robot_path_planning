@@ -2,7 +2,7 @@ import yaml
 import random
 
 if __name__ == '__main__':
-    agent_num = 4
+    agent_num = 6
     obstacle_list = []
     grid_map = []
     with open('../maps/logistics_world/Map_simple', 'r') as f:
